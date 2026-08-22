@@ -1,0 +1,65 @@
+import type { ComponentInstance, PinDef, Rotation } from "../types/circuit";
+
+/** Size, in screen pixels, of one grid unit. Every coordinate stored in
+ *  the document is in grid units; this is the only place px-per-unit lives. */
+export const GRID_SIZE = 24;
+
+export function snap(value: number): number {
+  return Math.round(value);
+}
+
+export function gridToPx(value: number): number {
+  return value * GRID_SIZE;
+}
+
+export function pxToGrid(value: number): number {
+  return value / GRID_SIZE;
+}
+
+/** Rotate a local point by a component's rotation, then apply mirroring
+ *  (mirror flips the local X axis before rotation, matching how most
+ *  schematic tools define "flip horizontal"). Returns local-space point. */
+export function transformLocal(
+  local: { x: number; y: number },
+  rotation: Rotation,
+  mirrored: boolean
+): { x: number; y: number } {
+  let { x, y } = local;
+  if (mirrored) x = -x;
+
+  const rad = (rotation * Math.PI) / 180;
+  const cos = Math.round(Math.cos(rad));
+  const sin = Math.round(Math.sin(rad));
+  return {
+    x: x * cos - y * sin,
+    y: x * sin + y * cos,
+  };
+}
+
+/** Resolve a pin's absolute position (grid units) for a placed component. */
+export function resolvePinWorld(
+  component: ComponentInstance,
+  pin: PinDef
+): { x: number; y: number } {
+  const t = transformLocal(pin.local, component.rotation, component.mirrored);
+  return { x: component.x + t.x, y: component.y + t.y };
+}
+
+export function distance(
+  a: { x: number; y: number },
+  b: { x: number; y: number }
+): number {
+  return Math.hypot(a.x - b.x, a.y - b.y);
+}
+
+/** Build an orthogonal (Manhattan) path between two points with a single
+ *  elbow, biased toward leaving each pin horizontally first — reads well
+ *  for the common case of left/right two-terminal parts. */
+export function orthogonalPath(
+  a: { x: number; y: number },
+  b: { x: number; y: number }
+): { x: number; y: number }[] {
+  if (a.x === b.x || a.y === b.y) return [a, b];
+  const midX = (a.x + b.x) / 2;
+  return [a, { x: midX, y: a.y }, { x: midX, y: b.y }, b];
+}

@@ -1,0 +1,107 @@
+@import url("https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap");
+@import "./tokens.css";
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  margin: 0;
+  height: 100%;
+  background: var(--bg-canvas);
+  color: var(--text-primary);
+}
+
+body {
+  font-family: var(--font-mono);
+  -webkit-font-smoothing: antialiased;
+  overflow: hidden;
+}
+
+button {
+  font-family: inherit;
+  color: inherit;
+}
+
+::selection {
+  background: var(--phosphor-dim);
+}
+
+:focus-visible {
+  outline: 2px solid var(--amber);
+  outline-offset: 1px;
+}
+
+.app-shell {
+  display: grid;
+  grid-template-columns: 68px 1fr 260px;
+  grid-template-rows: 52px 1fr;
+  height: 100vh;
+  width: 100vw;
+}
+
+.app-titlebar {
+  grid-column: 1 / span 3;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 16px;
+  background: var(--bg-panel);
+  border-bottom: 1px solid var(--line-border);
+}
+
+.app-palette {
+  grid-row: 2;
+  background: var(--bg-panel);
+  border-right: 1px solid var(--line-border);
+  overflow-y: auto;
+}
+
+.app-canvas-area {
+  grid-row: 2;
+  position: relative;
+  overflow: hidden;
+  background: var(--bg-canvas);
+}
+
+.app-inspector {
+  grid-row: 2;
+  background: var(--bg-panel);
+  border-left: 1px solid var(--line-border);
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+}
+
+.brand {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.brand-mark {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 15px;
+  letter-spacing: 0.14em;
+  color: var(--text-primary);
+}
+
+.brand-mark span {
+  color: var(--phosphor);
+}
+
+.brand-sub {
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  color: var(--text-faint);
+  text-transform: uppercase;
+}
+
+.hint-text {
+  font-size: 10.5px;
+  color: var(--text-dim);
+  line-height: 1.5;
+}

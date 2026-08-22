@@ -1,0 +1,27 @@
+:root {
+  /* -- Color: an instrument-panel palette, not a marketing one -- */
+  --bg-canvas: #0a0f0c;
+  --bg-panel: #101512;
+  --bg-panel-alt: #161c18;
+  --bg-raised: #1b2320;
+  --line-grid: #1c2621;
+  --line-border: #253530;
+
+  --phosphor: #6effb0;       /* live traces, connected pins, success */
+  --phosphor-dim: #3c7a5c;
+  --amber: #ffb454;          /* selection, hover targets, running state */
+  --amber-dim: #8a6a3a;
+  --danger: #ff6b6b;
+
+  --text-primary: #dcebe2;
+  --text-dim: #75897e;
+  --text-faint: #445048;
+
+  /* -- Type: mono for readouts (this is an instrument), grotesk for
+     the few display moments -- */
+  --font-display: "Space Grotesk", "IBM Plex Mono", monospace;
+  --font-mono: "IBM Plex Mono", "JetBrains Mono", ui-monospace, monospace;
+
+  --radius-sm: 3px;
+  --radius-md: 6px;
+}
