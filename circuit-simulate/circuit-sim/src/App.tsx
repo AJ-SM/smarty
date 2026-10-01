@@ -12,6 +12,7 @@ export type ViewMode = "canvas" | "circuitjs";
 export default function App() {
   const [viewMode, setViewMode] = useState<ViewMode>("canvas");
   const netlistRaw = useCircuitStore((s) => s.netlistRaw);
+  const sceneVersion = useCircuitStore((s) => s.sceneVersion);
 
   return (
     <div className="app-shell">
@@ -23,7 +24,8 @@ export default function App() {
       </div>
       <div className="app-canvas-area">
         {viewMode === "canvas" ? (
-          <SchematicCanvas />
+          // Remount per scene so a new circuit starts from a fresh view.
+          <SchematicCanvas key={sceneVersion} />
         ) : (
           <CircuitJsViewer netlistJson={netlistRaw} />
         )}

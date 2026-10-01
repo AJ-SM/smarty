@@ -2,14 +2,16 @@ import { GRID_SIZE, orthogonalPath } from "../utils/geometry";
 
 interface Props {
   points: { x: number; y: number }[]; // grid units, already resolved
+  /** Outward direction of each end's pin, if it is attached to one. */
+  dirs?: ({ x: number; y: number } | undefined)[];
   selected: boolean;
   onPointerDown: (e: React.PointerEvent) => void;
 }
 
-export function WireView({ points, selected, onPointerDown }: Props) {
+export function WireView({ points, dirs, selected, onPointerDown }: Props) {
   if (points.length < 2) return null;
   const [a, b] = points;
-  const routed = orthogonalPath(a, b).map((p) => ({
+  const routed = orthogonalPath(a, b, dirs?.[0], dirs?.[1]).map((p) => ({
     x: p.x * GRID_SIZE,
     y: p.y * GRID_SIZE,
   }));

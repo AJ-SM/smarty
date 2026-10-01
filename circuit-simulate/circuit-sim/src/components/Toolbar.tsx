@@ -1,7 +1,8 @@
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import { useCircuitStore } from "../store/circuitStore";
 import type { JsonNetlist } from "../utils/loadNetlistJson";
 import type { ViewMode } from "../App";
+import { DrawCircuitModal } from "./DrawCircuitModal";
 
 interface ToolbarProps {
   viewMode: ViewMode;
@@ -16,6 +17,7 @@ export function Toolbar({ viewMode, onViewModeChange }: ToolbarProps) {
   const wireCount = useCircuitStore((s) => s.wires.length);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [drawOpen, setDrawOpen] = useState(false);
 
   function handleLoadClick() {
     fileInputRef.current?.click();
@@ -108,6 +110,14 @@ export function Toolbar({ viewMode, onViewModeChange }: ToolbarProps) {
 
         <button
           className="btn btn-load"
+          onClick={() => setDrawOpen(true)}
+          title="Sketch a circuit and let the model generate the schematic"
+        >
+          ✎ Draw Circuit
+        </button>
+
+        <button
+          className="btn btn-load"
           onClick={handleLoadClick}
           title="Load a JSON netlist file"
         >
@@ -123,6 +133,8 @@ export function Toolbar({ viewMode, onViewModeChange }: ToolbarProps) {
           Clear
         </button>
       </div>
+
+      {drawOpen && <DrawCircuitModal onClose={() => setDrawOpen(false)} />}
     </>
   );
 }

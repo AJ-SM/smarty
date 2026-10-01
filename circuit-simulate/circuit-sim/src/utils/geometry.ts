@@ -52,14 +52,36 @@ export function distance(
   return Math.hypot(a.x - b.x, a.y - b.y);
 }
 
-/** Build an orthogonal (Manhattan) path between two points with a single
- *  elbow, biased toward leaving each pin horizontally first — reads well
- *  for the common case of left/right two-terminal parts. */
-export function orthogonalPath(
-  a: { x: number; y: number },
-  b: { x: number; y: number }
-): { x: number; y: number }[] {
+/** Unit direction a pin points out of its component (e.g. {0,-1} for the
+ *  top pin of a vertical part), used to route wires away from the body. */
+export function pinDirection(
+  component: ComponentInstance,
+  pin: PinDef
+): { x: number; y: number } {
+  const t = transformLocal(pin.local, component.rotation, component.mirrored);
+  return { x: Math.sign(t.x), y: Math.sign(t.y) };
+}
+
+type Pt = { x: number; y: number };
+
+/** Build an orthogonal (Manhattan) path between two points. When the pins'
+ *  outward directions are known the wire leaves each pin along its axis:
+ *  one elbow (L) when the pins face across each other, two (Z) when they
+ *  are parallel. Without directions it leaves horizontally first — reads
+ *  well for the common case of left/right two-terminal parts. */
+export function orthogonalPath(a: Pt, b: Pt, dirA?: Pt, dirB?: Pt): Pt[] {
   if (a.x === b.x || a.y === b.y) return [a, b];
+  const aVertical = !!dirA && dirA.x === 0 && dirA.y !== 0;
+  const bVertical = dirB ? dirB.x === 0 && dirB.y !== 0 : aVertical;
+
+  if (dirA && aVertical !== bVertical) {
+    // L-shape: leave `a` along its own axis, arrive at `b` along its axis.
+    return aVertical ? [a, { x: a.x, y: b.y }, b] : [a, { x: b.x, y: a.y }, b];
+  }
+  if (aVertical && bVertical) {
+    const midY = (a.y + b.y) / 2;
+    return [a, { x: a.x, y: midY }, { x: b.x, y: midY }, b];
+  }
   const midX = (a.x + b.x) / 2;
   return [a, { x: midX, y: a.y }, { x: midX, y: b.y }, b];
 }

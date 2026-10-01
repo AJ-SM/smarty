@@ -339,3 +339,117 @@
   padding: 1px 5px;
   border-radius: var(--radius-sm);
 }
+
+/* ── Draw-a-circuit modal ────────────────────────────────────────────────── */
+
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: rgba(4, 8, 6, 0.72);
+}
+
+.modal {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-height: 100%;
+  padding: 16px;
+  background: var(--bg-panel);
+  border: 1px solid var(--line-border);
+  border-radius: var(--radius-md);
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.5);
+}
+
+.draw-modal {
+  width: min(1320px, 100%);
+}
+
+.modal-header,
+.modal-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.modal-title {
+  margin: 0 0 4px;
+  font-family: var(--font-display);
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+}
+
+.draw-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.draw-width {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.draw-width input {
+  accent-color: var(--phosphor);
+  width: 90px;
+}
+
+.draw-surface {
+  position: relative;
+  background: var(--bg-canvas);
+  min-height: 0;
+  border: 1px solid var(--line-border);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+}
+
+.draw-canvas {
+  display: block;
+  /* Keep the 16:10 drawing ratio exact (no letterboxing) so pointer
+     coordinates map 1:1 onto the internal canvas. */
+  width: min(100%, calc((100vh - 200px) * 1.6));
+  height: auto;
+  margin: 0 auto;
+  /* Same dotted grid as the schematic canvas (GRID_SIZE 24, dot r 1.5). */
+  background-color: var(--bg-canvas);
+  background-image: radial-gradient(circle, var(--line-grid) 1.5px, transparent 1.6px);
+  background-size: 24px 24px;
+  background-position: 0 0;
+  cursor: crosshair;
+  touch-action: none;
+}
+
+.draw-canvas.erasing {
+  cursor: cell;
+}
+
+.draw-busy {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(10, 15, 12, 0.55);
+  color: var(--phosphor);
+  font-size: 13px;
+  letter-spacing: 0.04em;
+}
+
+.draw-generate {
+  width: auto;
+  padding: 10px 20px;
+}
+
+.btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}

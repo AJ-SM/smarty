@@ -266,6 +266,39 @@ async def simulate(req: SimulateRequest) -> Any:
 
 
 # ---------------------------------------------------------------------------
+# Drawn circuit → netlist (circuitmodel YOLO pipeline)
+# ---------------------------------------------------------------------------
+
+class GenerateCircuitRequest(BaseModel):
+    image: str                   # PNG/JPEG as base64 or a data: URL
+    title: str = "drawn-circuit"
+
+
+@app.post("/generate-circuit")
+def generate_circuit(req: GenerateCircuitRequest) -> dict[str, Any]:
+    """
+    Accepts an image of a hand-drawn circuit (e.g. the frontend's drawing
+    canvas), runs it through the circuitmodel pipeline, and returns the
+    netlist JSON in the same format as circuitmodel's netlist.json.
+    """
+    import base64
+    import binascii
+
+    from recognizer import RecognitionError, decode_image, recognize
+
+    payload = req.image.split(",", 1)[1] if req.image.startswith("data:") else req.image
+    try:
+        data = base64.b64decode(payload, validate=True)
+    except binascii.Error:
+        raise HTTPException(status_code=400, detail="Image is not valid base64.")
+
+    try:
+        return recognize(decode_image(data), title=req.title)
+    except RecognitionError as e:
+        raise HTTPException(status_code=422, detail=str(e))
+
+
+# ---------------------------------------------------------------------------
 # Quick health-check
 # ---------------------------------------------------------------------------
 

@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useCircuitStore } from "../store/circuitStore";
 import { getDef } from "../domain/componentDefs";
-import { GRID_SIZE, resolvePinWorld, snap } from "../utils/geometry";
+import { GRID_SIZE, pinDirection, resolvePinWorld, snap } from "../utils/geometry";
 import { useCanvasView } from "./useCanvasView";
 import { ComponentView } from "./ComponentView";
 import { WireView } from "./WireView";
@@ -174,6 +174,12 @@ export function SchematicCanvas() {
     return resolvePinWorld(comp, pinDef);
   };
 
+  const componentPinDir = (componentId: string, pinId: string) => {
+    const comp = components.find((c) => c.id === componentId);
+    const pinDef = comp && getDef(comp.kind).pins.find((p) => p.id === pinId);
+    return comp && pinDef ? pinDirection(comp, pinDef) : undefined;
+  };
+
   const isPinConnected = (componentId: string, pinId: string) =>
     wires.some(
       (w) =>
@@ -242,6 +248,10 @@ export function SchematicCanvas() {
               componentPinWorld(w.from.componentId, w.from.pinId),
               componentPinWorld(w.to.componentId, w.to.pinId),
             ]}
+            dirs={[
+              componentPinDir(w.from.componentId, w.from.pinId),
+              componentPinDir(w.to.componentId, w.to.pinId),
+            ]}
             selected={selection?.type === "wire" && selection.id === w.id}
             onPointerDown={(e) => {
               e.stopPropagation();
@@ -253,6 +263,7 @@ export function SchematicCanvas() {
         {pendingWire && (
           <WireView
             points={[componentPinWorld(pendingWire.from.componentId, pendingWire.from.pinId), pendingWire.cursor]}
+            dirs={[componentPinDir(pendingWire.from.componentId, pendingWire.from.pinId)]}
             selected={false}
             onPointerDown={() => {}}
           />

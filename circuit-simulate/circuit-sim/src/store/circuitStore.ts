@@ -44,6 +44,9 @@ interface CircuitState {
   /** The original parsed JsonNetlist — kept so CircuitJsViewer can build the
    *  Falstad text without re-reading the file. */
   netlistRaw: JsonNetlist | null;
+  /** Bumped whenever the whole scene is replaced (clear / load / generate),
+   *  so view-only state such as canvas pan/zoom can reset with it. */
+  sceneVersion: number;
   selection: SelectionRef;
   pendingWire: PendingWire | null;
   simStatus: "idle" | "running" | "done" | "error";
@@ -86,6 +89,7 @@ export const useCircuitStore = create<CircuitState>((set, get) => ({
   rawWireSegments: [],
   rawJunctions: [],
   netlistRaw: null,
+  sceneVersion: 0,
   selection: null,
   pendingWire: null,
   simStatus: "idle",
@@ -194,7 +198,8 @@ export const useCircuitStore = create<CircuitState>((set, get) => ({
   cancelWire: () => set({ pendingWire: null }),
 
   clearAll: () =>
-    set({
+    set((s) => ({
+      sceneVersion: s.sceneVersion + 1,
       components: [],
       wires: [],
       rawWireSegments: [],
@@ -205,11 +210,12 @@ export const useCircuitStore = create<CircuitState>((set, get) => ({
       simStatus: "idle",
       simResult: null,
       simError: null,
-    }),
+    })),
 
   loadNetlist: (json) => {
     const { components, wires, skipped, rawWireSegments, rawJunctions } = loadNetlistJson(json);
-    set({
+    set((s) => ({
+      sceneVersion: s.sceneVersion + 1,
       components,
       wires,
       rawWireSegments,
@@ -220,7 +226,7 @@ export const useCircuitStore = create<CircuitState>((set, get) => ({
       simStatus: "idle",
       simResult: null,
       simError: null,
-    });
+    }));
     return skipped;
   },
 

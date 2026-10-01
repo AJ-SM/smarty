@@ -29,7 +29,7 @@
 import { v4 as uuid } from "uuid";
 import type { ComponentInstance, ComponentKind, Rotation, Wire, PinRef } from "../types/circuit";
 import { getDef } from "../domain/componentDefs";
-import { snap, orthogonalPath, resolvePinWorld } from "./geometry";
+import { snap, orthogonalPath, pinDirection, resolvePinWorld } from "./geometry";
 
 // ─── External JSON types ──────────────────────────────────────────────────────
 
@@ -259,8 +259,8 @@ function buildParams(kind: ComponentKind, value: string): Record<string, number>
 // ─── Coordinate transform (pixel → grid) ─────────────────────────────────────
 
 const CANVAS_MARGIN = 4;  // grid units of padding around the placed circuit
-const TARGET_W      = 52; // target canvas width in grid units
-const TARGET_H      = 44; // target canvas height in grid units
+const TARGET_W      = 26; // target canvas width in grid units
+const TARGET_H      = 22; // target canvas height in grid units
 
 /** Tolerance (px) within which two coordinates are considered the same rail. */
 export const CLUSTER_TOLERANCE_PX = 50;
@@ -502,10 +502,10 @@ function placeInLoop(chain: MappedComp[]): void {
   const botN = N - topN;
 
   // Horizontal step between successive components on the same branch.
-  const STEP   = 10; // grid units
+  const STEP   = 5; // grid units
   const START_X = CANVAS_MARGIN + 2;
   const TOP_Y   = CANVAS_MARGIN + 4;
-  const BOT_Y   = CANVAS_MARGIN + 4 + 12; // 12 grid-unit vertical gap
+  const BOT_Y   = CANVAS_MARGIN + 4 + 6; // 6 grid-unit vertical gap
 
   // Each part's def places pin[0] ("A"/"+"/net_pos) on the left and pin[1]
   // ("B"/"-"/net_neg) on the right by default. Flip (mirror) it whenever that
@@ -723,6 +723,12 @@ function pinWorld(ref: PinRef, byId: Map<string, ComponentInstance>): GPoint {
   return resolvePinWorld(inst, pinDef);
 }
 
+function pinDir(ref: PinRef, byId: Map<string, ComponentInstance>): GPoint {
+  const inst = byId.get(ref.componentId)!;
+  const pinDef = getDef(inst.kind).pins.find((p) => p.id === ref.pinId)!;
+  return pinDirection(inst, pinDef);
+}
+
 function pathSegments(path: GPoint[]): [GPoint, GPoint][] {
   const segs: [GPoint, GPoint][] = [];
   for (let i = 0; i < path.length - 1; i++) segs.push([path[i], path[i + 1]]);
@@ -751,7 +757,14 @@ function segmentsOverlap(a: [GPoint, GPoint], b: [GPoint, GPoint]): boolean {
 function countWireOverlaps(components: ComponentInstance[], wires: Wire[]): number {
   const byId = new Map(components.map((c) => [c.id, c]));
   const allSegs = wires.map((w) =>
-    pathSegments(orthogonalPath(pinWorld(w.from, byId), pinWorld(w.to, byId)))
+    pathSegments(
+      orthogonalPath(
+        pinWorld(w.from, byId),
+        pinWorld(w.to, byId),
+        pinDir(w.from, byId),
+        pinDir(w.to, byId)
+      )
+    )
   );
   let count = 0;
   for (let i = 0; i < allSegs.length; i++) {
@@ -856,11 +869,11 @@ export function loadNetlistJson(rawJson: JsonNetlist): LoadResult {
   // 2. Position components
   //
   //  Priority:
-  //    a) Topology layout — when components carry net_pos/net_neg, trace the
-  //       series chain and arrange in a clean rectangle.  This is the primary
-  //       path for YOLO-detected netlists and produces straight-line wiring.
-  //    b) Photo-coordinate layout — use bbox pixel positions when no net
-  //       topology is available but component_details are present.
+  //    a) Photo-coordinate layout — when every placed part has a detected
+  //       bbox + pins, keep it where it was drawn, oriented the way its
+  //       wires actually leave it. This reproduces the source drawing.
+  //    b) Topology layout — no geometry but net_pos/net_neg are known: trace
+  //       the series chain and arrange it in a clean rectangle.
   //    c) Auto-grid — last resort for minimal old-format JSON.
   const details = json.component_details ?? [];
   const detailMap = new Map<string, JsonComponentDetail>(
@@ -872,8 +885,11 @@ export function loadNetlistJson(rawJson: JsonNetlist): LoadResult {
   const hasNetTopology = mapped.some(
     (m) => m.jsonComp.net_pos || m.jsonComp.net_neg
   );
+  const hasFullGeometry =
+    mapped.length > 0 &&
+    mapped.every((m) => (detailMap.get(m.jsonComp.ref_des)?.pins.length ?? 0) > 0);
 
-  if (hasNetTopology) {
+  if (!hasFullGeometry && hasNetTopology) {
     const chain = traceSeriesChain(mapped);
     placeInLoop(chain);
   } else if (details.length > 0) {
@@ -938,7 +954,9 @@ export function loadNetlistJson(rawJson: JsonNetlist): LoadResult {
 
   // 4. If any auto-routed wires visually overlap, try rotating/mirroring the
   //    components they connect to find an orientation that clears them.
-  resolveWireOverlaps(components, wires);
+  //    Not for photo layout: there the orientation comes from the drawing
+  //    and must be kept as drawn.
+  if (!p2g) resolveWireOverlaps(components, wires);
 
   // 5. Convert raw wire segments + junctions to clustered grid units
   //    for the background trace layer.  Using toGridClustered ensures the
