@@ -23,6 +23,7 @@ export function SchematicCanvas() {
   const select = useCircuitStore((s) => s.select);
   const addComponent = useCircuitStore((s) => s.addComponent);
   const moveComponent = useCircuitStore((s) => s.moveComponent);
+  const setWireRoute = useCircuitStore((s) => s.setWireRoute);
   const rotateComponent = useCircuitStore((s) => s.rotateComponent);
   const mirrorComponent = useCircuitStore((s) => s.mirrorComponent);
   const deleteSelected = useCircuitStore((s) => s.deleteSelected);
@@ -35,6 +36,7 @@ export function SchematicCanvas() {
     null
   );
   const dragging = useRef<{ id: string; offsetX: number; offsetY: number } | null>(null);
+  const wireDrag = useRef<{ id: string; axis: "x" | "y" } | null>(null);
   const panning = useRef(false);
   // Set to true by a pin's onPointerUp handler so the SVG-level onPointerUp
   // knows NOT to cancel an in-progress wire (the pin already finished it).
@@ -90,6 +92,12 @@ export function SchematicCanvas() {
         updatePan(e.clientX, e.clientY);
         return;
       }
+      if (wireDrag.current) {
+        const { x, y } = screenToGrid(e.clientX, e.clientY);
+        const { id, axis } = wireDrag.current;
+        setWireRoute(id, { axis, value: snap(axis === "y" ? y : x) });
+        return;
+      }
       if (dragging.current) {
         const { x, y } = screenToGrid(e.clientX, e.clientY);
         moveComponent(dragging.current.id, x - dragging.current.offsetX, y - dragging.current.offsetY);
@@ -100,13 +108,14 @@ export function SchematicCanvas() {
         updateWireCursor({ x: snap(x), y: snap(y) });
       }
     },
-    [screenToGrid, moveComponent, pendingWire, updateWireCursor, updatePan]
+    [screenToGrid, moveComponent, setWireRoute, pendingWire, updateWireCursor, updatePan]
   );
 
   const onSvgPointerUp = useCallback(() => {
     panning.current = false;
     endPan();
     dragging.current = null;
+    wireDrag.current = null;
     if (pendingWire) {
       if (wireFinalizedByPin.current) {
         // A pin's onPointerUp already called finishWire — don't cancel.
@@ -253,9 +262,11 @@ export function SchematicCanvas() {
               componentPinDir(w.to.componentId, w.to.pinId),
             ]}
             selected={selection?.type === "wire" && selection.id === w.id}
-            onPointerDown={(e) => {
+            route={w.route}
+            onPointerDown={(e, axis) => {
               e.stopPropagation();
               select({ type: "wire", id: w.id });
+              if (axis && e.button === 0) wireDrag.current = { id: w.id, axis };
             }}
           />
         ))}

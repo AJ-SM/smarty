@@ -76,16 +76,12 @@ def decode_image(data: bytes) -> np.ndarray:
     return img
 
 
-def recognize(image: np.ndarray, title: str = "drawn-circuit") -> dict:
-    """Run the full pipeline and return the netlist JSON dict."""
-    from wire_detector     import BoundingBox
-    from netlist_generator import NetlistGenerator
-    from drawn_topology    import DrawnTopology
-    from value_reader      import assign_values, format_spice, run_ocr
+def detect_boxes(image: np.ndarray) -> list:
+    """YOLO component detection only (no wires, no OCR): fast enough to run
+    while the user is still drawing."""
+    from wire_detector import BoundingBox
 
     model = _get_model()
-
-    # ── 1. Component detection ──────────────────────────────────
     with _model_lock:
         preds = model.predict(source=image, conf=YOLO_CONF, iou=YOLO_IOU, verbose=False)
 
@@ -98,6 +94,17 @@ def recognize(image: np.ndarray, title: str = "drawn-circuit") -> dict:
             cls_name=names[int(box.cls.item())],
             conf=float(box.conf.item()),
         ))
+    return boxes
+
+
+def recognize(image: np.ndarray, title: str = "drawn-circuit") -> dict:
+    """Run the full pipeline and return the netlist JSON dict."""
+    from netlist_generator import NetlistGenerator
+    from drawn_topology    import DrawnTopology
+    from value_reader      import assign_values, format_spice, run_ocr
+
+    # ── 1. Component detection ──────────────────────────────────
+    boxes = detect_boxes(image)
 
     if not boxes:
         raise RecognitionError(

@@ -5,6 +5,7 @@ import type {
   ComponentKind,
   PinRef,
   Wire,
+  WireRoute,
 } from "../types/circuit";
 import { getDef } from "../domain/componentDefs";
 import { snap } from "../utils/geometry";
@@ -57,6 +58,7 @@ interface CircuitState {
 
   addComponent: (kind: ComponentKind, x: number, y: number) => void;
   moveComponent: (id: string, x: number, y: number) => void;
+  setWireRoute: (id: string, route: WireRoute) => void;
   rotateComponent: (id: string) => void;
   mirrorComponent: (id: string) => void;
   updateParam: (id: string, key: string, value: number) => void;
@@ -121,6 +123,11 @@ export const useCircuitStore = create<CircuitState>((set, get) => ({
       components: s.components.map((c) =>
         c.id === id ? { ...c, x: snap(x), y: snap(y) } : c
       ),
+    })),
+
+  setWireRoute: (id, route) =>
+    set((s) => ({
+      wires: s.wires.map((w) => (w.id === id ? { ...w, route } : w)),
     })),
 
   rotateComponent: (id) =>

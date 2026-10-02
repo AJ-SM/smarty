@@ -1,15 +1,17 @@
-import { useRef, useState } from "react";
+import { useRef } from "react";
 import { useCircuitStore } from "../store/circuitStore";
 import type { JsonNetlist } from "../utils/loadNetlistJson";
 import type { ViewMode } from "../App";
-import { DrawCircuitModal } from "./DrawCircuitModal";
 
 interface ToolbarProps {
   viewMode: ViewMode;
   onViewModeChange: (mode: ViewMode) => void;
+  drawing: boolean;
+  onDrawClick: () => void;
+  onLoadImageClick: () => void;
 }
 
-export function Toolbar({ viewMode, onViewModeChange }: ToolbarProps) {
+export function Toolbar({ viewMode, onViewModeChange, drawing, onDrawClick, onLoadImageClick }: ToolbarProps) {
   const clearAll = useCircuitStore((s) => s.clearAll);
   const loadNetlist = useCircuitStore((s) => s.loadNetlist);
   const netlistRaw = useCircuitStore((s) => s.netlistRaw);
@@ -17,7 +19,6 @@ export function Toolbar({ viewMode, onViewModeChange }: ToolbarProps) {
   const wireCount = useCircuitStore((s) => s.wires.length);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [drawOpen, setDrawOpen] = useState(false);
 
   function handleLoadClick() {
     fileInputRef.current?.click();
@@ -86,7 +87,7 @@ export function Toolbar({ viewMode, onViewModeChange }: ToolbarProps) {
               onClick={() => onViewModeChange("canvas")}
               title="SVG schematic canvas"
             >
-              ◈ Canvas
+              Canvas
             </button>
             <button
               id="view-toggle-circuitjs"
@@ -94,7 +95,7 @@ export function Toolbar({ viewMode, onViewModeChange }: ToolbarProps) {
               onClick={() => onViewModeChange("circuitjs")}
               title="Interactive CircuitJS simulation"
             >
-              ⚡ CircuitJS
+              CircuitJS
             </button>
           </div>
         )}
@@ -110,10 +111,20 @@ export function Toolbar({ viewMode, onViewModeChange }: ToolbarProps) {
 
         <button
           className="btn btn-load"
-          onClick={() => setDrawOpen(true)}
+          onClick={onDrawClick}
+          disabled={drawing}
           title="Sketch a circuit and let the model generate the schematic"
         >
-          ✎ Draw Circuit
+          Draw Circuit
+        </button>
+
+        <button
+          className="btn btn-load"
+          onClick={onLoadImageClick}
+          disabled={drawing}
+          title="Generate the schematic from a photo or scan of a circuit"
+        >
+          Load Image
         </button>
 
         <button
@@ -121,7 +132,7 @@ export function Toolbar({ viewMode, onViewModeChange }: ToolbarProps) {
           onClick={handleLoadClick}
           title="Load a JSON netlist file"
         >
-          ⬆ Load Netlist
+          Load Netlist
         </button>
 
         <button
@@ -134,7 +145,6 @@ export function Toolbar({ viewMode, onViewModeChange }: ToolbarProps) {
         </button>
       </div>
 
-      {drawOpen && <DrawCircuitModal onClose={() => setDrawOpen(false)} />}
     </>
   );
 }

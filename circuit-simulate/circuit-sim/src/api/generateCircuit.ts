@@ -37,3 +37,31 @@ export async function generateCircuitFromImage(
 
   return (await response.json()) as JsonNetlist;
 }
+
+/** Detection-only route used by run-time processing (RTP) while drawing.
+ *  Override with VITE_DETECT_URL in a .env file. */
+export const DETECT_ENDPOINT =
+  import.meta.env.VITE_DETECT_URL ?? GENERATE_ENDPOINT.replace(/generate-circuit$/, "detect-components");
+
+export interface Detection {
+  type: string;
+  conf: number;
+  /** Box in the pixels of the image that was sent. */
+  bbox: { x1: number; y1: number; x2: number; y2: number };
+}
+
+/** Run component detection only (no wires, no OCR) on a drawing. */
+export async function detectComponents(
+  imageDataUrl: string,
+  signal?: AbortSignal
+): Promise<Detection[]> {
+  const response = await fetch(DETECT_ENDPOINT, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ image: imageDataUrl }),
+    signal,
+  });
+  if (!response.ok) throw new Error(`Backend returned ${response.status}`);
+  const body = (await response.json()) as { detections: Detection[] };
+  return body.detections ?? [];
+}

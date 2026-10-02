@@ -138,8 +138,13 @@ function typeToKind(type: string): ComponentKind | null {
     case "resistor":    return "resistor";
     case "capacitor":   return "capacitor";
     case "inductor":    return "inductor";
+    case "battery":     return "battery";
+    case "diode":       return "diode";
+    case "dep. voltage":
+    case "dep voltage":
+    case "dependent voltage":
+    case "vsource_dep": return "vsource_dep";
     case "voltage":
-    case "battery":
     case "vsource":
     case "vsource_dc":
     case "dc voltage":
@@ -150,7 +155,7 @@ function typeToKind(type: string): ComponentKind | null {
     case "ac":          return "vsource_ac";
     case "ground":
     case "gnd":         return "ground";
-    default:            return null; // Diode, transistor, etc. not yet in canvas
+    default:            return null; // transistors etc. not yet in canvas
   }
 }
 

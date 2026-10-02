@@ -173,7 +173,8 @@ function orderPins(
   // so CircuitJS renders the + label at the correct end.
   const t = type.toLowerCase();
   if (t === "voltage" || t === "battery" || t === "vsource_dc" || t === "dc voltage" || t === "dc" ||
-      t === "vsource_ac" || t === "ac voltage" || t === "ac") {
+      t === "vsource_ac" || t === "ac voltage" || t === "ac" ||
+      t === "vsource_dep" || t === "dep. voltage") {
     const name0 = pins[0].name.toLowerCase();
     const name1 = pins[1].name.toLowerCase();
     const p0IsNeg = NEG_PIN_NAMES.has(name0);
@@ -223,7 +224,9 @@ function componentLine(
     case "battery":
     case "vsource_dc":
     case "dc voltage":
-    case "dc":                          return `v ${x1} ${y1} ${x2} ${y2} 0 0 40 ${val} 0 0 0.5`;
+    case "dc":
+    case "dep. voltage":
+    case "vsource_dep":                 return `v ${x1} ${y1} ${x2} ${y2} 0 0 40 ${val} 0 0 0.5`;
     case "vsource_ac":
     case "ac voltage":
     case "ac source":
